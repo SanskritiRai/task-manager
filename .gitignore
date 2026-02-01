@@ -1,0 +1,15 @@
+# Build output
+target/
+
+# IntelliJ files
+.idea/
+*.iml
+
+# Logs
+*.log
+
+# Mac OS files
+.DS_Store
+
+# Secrets
+application.properties
