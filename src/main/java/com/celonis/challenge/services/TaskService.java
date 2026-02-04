@@ -215,7 +215,7 @@ public class TaskService {
         List<ProjectGenerationTask> runningTasksList = projectGenerationTaskRepository.findByTaskStatus(TaskStatus.RUNNING);
         if (!runningTasksList.isEmpty()) {
             log.warn("Updating {} tasks after restart", runningTasksList.size());
-            runningTasksList.forEach(task -> task.setTaskStatus(TaskStatus.COMPLETED));
+            runningTasksList.forEach(task -> task.setTaskStatus(TaskStatus.FAILED));
             projectGenerationTaskRepository.saveAll(runningTasksList);
         }
     }
