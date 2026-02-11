@@ -33,6 +33,9 @@ public class ProjectGenerationTask {
     @Enumerated(EnumType.STRING)
     private TaskStatus taskStatus;
 
+    @Version
+    private Long version;
+
     @ElementCollection
     @CollectionTable(name = "task_parameters", joinColumns = @JoinColumn(name = "task_id"))
     @MapKeyColumn(name = "parameter_key")
@@ -45,6 +48,9 @@ public class ProjectGenerationTask {
     @Column(name = "storage_location")
     @JsonIgnore
     private String storageLocation;
+
+    public Long getVersion() {return version;
+    }
 
     public int getProgress() {
         return progress;
