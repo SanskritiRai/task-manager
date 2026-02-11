@@ -1,8 +1,11 @@
 package com.celonis.challenge.services;
 
+import com.celonis.challenge.exceptions.BadRequestException;
 import com.celonis.challenge.exceptions.InternalException;
 import com.celonis.challenge.model.ProjectGenerationTask;
 import com.celonis.challenge.model.ProjectGenerationTaskRepository;
+import com.celonis.challenge.model.TaskStatus;
+import com.celonis.challenge.model.TaskType;
 import org.apache.commons.io.IOUtils;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpHeaders;
@@ -30,8 +33,17 @@ public class FileService {
      * @return ResponseEntity<FileSystemResource>
      */
     public ResponseEntity<FileSystemResource> getTaskResult(ProjectGenerationTask projectGenerationTask) {
-        File inputFile = new File(projectGenerationTask.getStorageLocation());
+        if (projectGenerationTask.getTaskType() != TaskType.STORE_FILE) {
+            throw new BadRequestException("Get Result is only supported for store file");
+        }
 
+        if (projectGenerationTask.getTaskStatus() == TaskStatus.PENDING) {
+            return ResponseEntity
+                    .status(HttpStatus.OK)
+                    .build();
+        }
+
+        File inputFile = new File(projectGenerationTask.getStorageLocation());
         if (!inputFile.exists()) {
             throw new InternalException("File not generated yet");
         }
