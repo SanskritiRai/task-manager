@@ -25,12 +25,12 @@ public class TaskCleanupService {
 
     /**
      * CLEAN UP PENDING TASKS AFTER days NO OF DAYS
-     * we can also use @Scheduled(cron = "0 0 2 * * *")
+     * we can also use @Scheduled(cron = "0 0 5 * * ?")
      * used fixedRate for testing purpose
      */
     @Scheduled(fixedRate = 600000)
     public void cleanUpPendingTasks() {
-        int days = 1;
+        int days = 20;
         Date deadline = Date.from(Instant.now().minus(days, ChronoUnit.DAYS));
         List<ProjectGenerationTask> pendingTasksList = projectGenerationTaskRepository.findByTaskStatusAndCreationDateBefore(TaskStatus.PENDING, deadline);
 
