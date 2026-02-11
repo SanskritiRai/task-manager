@@ -13,6 +13,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -104,7 +105,12 @@ public class TaskService {
         existingTask.setName(projectGenerationTask.getName());
         existingTask.setParameters(projectGenerationTask.getParameters());
 
-        return projectGenerationTaskRepository.save(existingTask);
+        try {
+            return projectGenerationTaskRepository.save(existingTask);
+        } catch (ObjectOptimisticLockingFailureException e) {
+            log.error("Optimistic locking failure while updating task with id={}", taskId, e);
+            throw new ConflictException("Task with id=" + taskId + " already modified");
+        }
     }
 
     /**
@@ -168,7 +174,12 @@ public class TaskService {
         TaskExecutor taskExecutor = taskExecutorRegistry.getTaskExecutor(projectGenerationTask.getTaskType());
         log.info("Resolved executor {}", taskExecutor.getClass().getName());
 
-        taskExecutor.execute(projectGenerationTask);
+        try {
+            taskExecutor.execute(projectGenerationTask);
+        } catch (ObjectOptimisticLockingFailureException e) {
+            log.error("Task is already executed with id={}", taskId, e);
+            throw new ConflictException("Task is already executed with id=" + taskId);
+        }
     }
 
     /**
@@ -201,7 +212,12 @@ public class TaskService {
         taskExecutor.cancel(projectGenerationTask);
 
         projectGenerationTask.setTaskStatus(TaskStatus.CANCELED);
-        projectGenerationTaskRepository.save(projectGenerationTask);
+        try {
+            projectGenerationTaskRepository.save(projectGenerationTask);
+        } catch (ObjectOptimisticLockingFailureException e) {
+            log.error("Optimistic Locking failure while cancelling the task with id={}", taskId, e);
+            throw new ConflictException("Task with id=" + taskId + " already cancelled");
+        }
 
         log.info("Task with id={} has been cancelled", taskId);
         return projectGenerationTask;
@@ -216,7 +232,13 @@ public class TaskService {
         if (!runningTasksList.isEmpty()) {
             log.warn("Updating {} tasks after restart", runningTasksList.size());
             runningTasksList.forEach(task -> task.setTaskStatus(TaskStatus.FAILED));
-            projectGenerationTaskRepository.saveAll(runningTasksList);
+
+            try {
+                projectGenerationTaskRepository.saveAll(runningTasksList);
+            } catch (ObjectOptimisticLockingFailureException e) {
+                log.error("Optimistic Locking failure while failing the tasks after restart", e);
+                throw new ConflictException("Optimistic Locking failure while failing the tasks");
+            }
         }
     }
 }
